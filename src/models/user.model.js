@@ -40,19 +40,6 @@ const userSchema = new Schema(
             ref : "Video"
             }
     ] ,
-      // 🔴 ADD HERE 👇 (watchHistory ke baad)
-
-      mobileNumber: {
-       type: String,
-       required: true,
-        unique: true,
-         trim: true
-       },
-          isMobileVerified: {
-          type: Boolean,
-           default: false
-        },
-
      password : {
             type: String,
             required: [true , 'Password is required']

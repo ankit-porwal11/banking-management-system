@@ -1,5 +1,5 @@
 import express from "express";
-import cors from "cors";
+import cors from "cors"; // ye frontend - backend connect krne ke liye 
 import cookieParser from "cookie-parser";
 
 const app = express();
@@ -17,7 +17,12 @@ app.use(cookieParser()) // cookies to json
 
 // Routes Import ❤️❤️
  import userRouter from "./routes/user.routes.js"
+ import accountRouter from "./routes/account.routes.js"
 
+
+
+// ❤️ ❤️ Account Router 
+app.use("/api/v1/account" , accountRouter)
 
  //❤️❤️ Routes Declaration 
  app.use("/api/v1/users" , userRouter)
