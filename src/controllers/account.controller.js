@@ -3,6 +3,7 @@ import { ApiError } from "../utils/apiError.js";
 import { ApiResponse } from "../utils/ApiRespones.js";
 import { Account } from "../models/account.model.js"
 import  { sendAccountCreatedEmail }  from "../service/email.service.js";
+import { Transaction } from "../models/transaction.model.js";
 
 
 
@@ -109,7 +110,16 @@ const depositMoney = asynHandler(async (req, res) => {
 
     await account.save();
 
-    // 5. response bhejo
+    // 5. transaction create
+    await Transaction.create({
+    account: account._id,
+    type: "DEPOSIT",
+    amount: Number(amount),
+    description: "Money deposited",
+    balanceAfter: account.balance
+});
+
+    // 6. response bhejo
     return res.status(200).json(
         new ApiResponse(
             200,
@@ -161,7 +171,16 @@ const withdrowMoney = asynHandler(async(req , res) => {
 
      await account.save();
 
-    // 7. response bhejo
+     // 7. transaction create
+     await Transaction.create({
+    account: account._id,
+    type: "WITHDRAW",
+    amount: Number(amount),
+    description: "Money withdrawn",
+    balanceAfter: account.balance
+}); 
+
+    // 8. response bhejo
     return res.status(200).json(
         new ApiResponse(
             200,
