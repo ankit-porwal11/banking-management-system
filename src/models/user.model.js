@@ -44,6 +44,12 @@ const userSchema = new Schema(
             type: String,
             required: [true , 'Password is required']
         } ,
+        systemUser:{
+            type: Boolean,
+            default: false,
+            immutable:true,
+            select: false
+        },
          refreshToken : {
             type: String
         } 

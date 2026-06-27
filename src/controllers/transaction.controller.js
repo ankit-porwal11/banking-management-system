@@ -3,6 +3,7 @@ import { ApiError } from "../utils/apiError.js";
 import { ApiResponse } from "../utils/ApiRespones.js";
 import { Transaction } from "../models/transaction.model.js";
 import { Account } from "../models/account.model.js"
+import { ledgerModel } from "../models/ledger.model.js";
 
  const getTransactions = asynHandler(async (req, res) => {
 
@@ -18,20 +19,62 @@ import { Account } from "../models/account.model.js"
     // 2. find transactions
     const transactions = await Transaction.find({
         account: account._id
-    }).sort({ createdAt: -1 });
+    }).populate({
+    path: "account",
+    select: "accountNumber user",
+    populate: {
+        path: "user",
+        select: "username fullName"
+    }
+    })
+    .sort({ createdAt: -1 });
+
+
+    const formattedTransactions = transactions.map((txn) => ({
+    accountNumber: txn.account.accountNumber,
+    username: txn.account.user.username,
+    type: txn.type,
+    amount: txn.amount,
+    description: txn.description,
+    balanceAfter: txn.balanceAfter,
+    status: txn.status,
+    createdAt: txn.createdAt
+}));
 
     // 3. response
     return res.status(200).json(
         new ApiResponse(
             200,
-            transactions,
+            formattedTransactions,
             "Transactions fetched successfully"
         )
     );
 });
 
+   const getLedgerHistory = asynHandler(async (req, res) => {
+
+  const account = await Account.findOne({
+    user: req.user._id
+  });
+
+  const ledgerEntries = await ledgerModel
+    .find({ account: account._id })
+    .populate("account", "accountNumber")
+    .sort({ createdAt: -1 });
+
+  return res.status(200).json(
+    new ApiResponse(
+      200,
+      ledgerEntries,
+      "Ledger history fetched successfully"
+    )
+  );
+});
+
+
 export {
-     getTransactions
+     getTransactions,
+     getLedgerHistory
 };
 
 

@@ -1,11 +1,12 @@
 import mongoose, { Schema } from "mongoose";
+import { ledgerModel } from "../models/ledger.model.js";
 
 const accountSchema = new Schema(
   {
     user : {
       type: Schema.Types.ObjectId,
       ref: "User",
-      required: [true , "Account Must be associated with a user "],
+      required: [true , "Account Must be associateq with a user "],
       index : true ,    
       unique: true,
     },
@@ -32,17 +33,17 @@ const accountSchema = new Schema(
 
     currency: {
       type: String,
-      required : [true , "Currency is requred for creating an Acoount"],
+      required : [true , "Currency is requreq for creating an Acoount"],
       default: "INR",
     },
 
     status: {
       type: String,
-      enum: ["ACTIVE", "BLOCKED", "CLOSED"],
+      enum: ["ACTIVE", "FROZEN", "CLOSED"],
       default: "ACTIVE",
     },
 
-    // isVerified: {
+    // isVerifieq: {
     //   type: Boolean,
     //   default: false,
     // },
@@ -53,6 +54,47 @@ const accountSchema = new Schema(
 );
 
 accountSchema.index({user: 1 , status: 1})
+
+accountSchema.methods.getBalance = async function(){
+      const balanceqata = await ledgerModel.aggregate([
+        { $match: {account : this._id}},
+        {
+          $group: {
+            _id: null,
+            totalDebit: {
+              $sum: {
+                $cond: [
+                  {$eq: ["$type", "DEBIT"]},
+                  "$amount",
+                  0
+                ]
+              }
+            },
+            totalCreqit: {
+              $sum: {
+                $cond: [
+                  {$eq: ["$type", "CREADIT"]},
+                  "$amount",
+                  0
+                ]
+              }
+            }
+          }
+        },
+       {
+        $project: {
+         _id: 0,
+         balance: {$subtract: ["$totalCreqit" , "$totalDebit"]}   
+        }
+      }
+      ])
+     
+      if(balanceqata.length === 0){
+      return 0
+      }
+
+      return balanceqata[0].balance
+}
 
 const Account = mongoose.model("Account", accountSchema);
 

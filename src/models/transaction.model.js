@@ -1,12 +1,13 @@
 import mongoose, { Schema } from "mongoose";
+import { Account } from "./account.model.js";
 
 const transactionSchema = new mongoose.Schema(
   {
-    account: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Account",
-      required: true,
-    },
+    // account: {
+    //   type: mongoose.Schema.Types.ObjectId,
+    //   ref: "Account",
+    //   required: true,
+    // },
 
     type: {
       type: String,
@@ -14,9 +15,36 @@ const transactionSchema = new mongoose.Schema(
       required: true,
     },
 
+     fromAccount: {
+   type: mongoose.Schema.Types.ObjectId,
+   ref: "Account",
+   required: function () {
+      return this.type === "TRANSFER";
+   },
+   index: true
+}, 
+
+toAccount: {
+   type: mongoose.Schema.Types.ObjectId,
+   ref: "Account",
+   required: function () {
+      return this.type === "TRANSFER";
+   },
+   index: true
+},
+
+  idempotencKey: {
+   type: String,
+   required: function () {
+      return this.type === "TRANSFER";
+   },
+    index:true,
+      unique: true
+},
+
     amount: {
       type: Number,
-      required: true,
+      required: [true, "Amount is required Creating a Transaction"],
     },
 
     currency: {
@@ -36,8 +64,11 @@ const transactionSchema = new mongoose.Schema(
 
     status: {
       type: String,
-      enum: ["SUCCESS", "FAILED"],
-      default: "SUCCESS",
+      enum: {
+         values: ["SUCCESS", "FAILED" , "PENDING" , "REVERSED"],
+          message: "Sataus Can be either SUCCESS , FAILED , PENDING , REVERSED " 
+    },
+      default: "PENDING",
     },
   },
   {
