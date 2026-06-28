@@ -16,39 +16,86 @@ import { ledgerModel } from "../models/ledger.model.js";
         throw new ApiError(404, "Account not found");
     }
 
-    // 2. find transactions
-    const transactions = await Transaction.find({
-        account: account._id
-    }).populate({
-    path: "account",
-    select: "accountNumber user",
-    populate: {
-        path: "user",
-        select: "username fullName"
+
+ // 2. find transactions (USER PASSBOOK STYLE)
+ const transactions = await Transaction.find({
+    $or: [
+        { account: account._id },
+        { fromAccount: account._id },
+        { toAccount: account._id }
+         
+    ]
+ })
+ .populate("account", "accountNumber")
+ .populate("fromAccount", "accountNumber")
+ .populate("toAccount", "accountNumber")
+ 
+ .sort({ createdAt: -1 });
+
+
+// 3. format transactions (BANK PASSBOOK LOGIC)
+const formattedTransactions = transactions.map(txn => {
+
+    let direction = "UNKNOWN";
+
+    // ✅ DEPOSIT = always CREDIT
+    if (txn.type === "DEPOSIT") {
+        direction = "CREDIT";
     }
-    })
-    .sort({ createdAt: -1 });
+
+    // ✅ WITHDRAW = always DEBIT
+    else if (txn.type === "WITHDRAW") {
+        direction = "DEBIT";
+    }
+
+    // ✅ TRANSFER = check sender/receiver
+    else if (txn.type === "TRANSFER") {
+
+        const fromId = txn.fromAccount?._id?.toString();
+        const myId = account._id.toString();
+
+        if (fromId && fromId === myId) {
+            direction = "DEBIT";   // money sent
+        } else {
+            direction = "CREDIT";  // money received
+        }
+    }
 
 
-    const formattedTransactions = transactions.map((txn) => ({
-    accountNumber: txn.account.accountNumber,
-    username: txn.account.user.username,
-    type: txn.type,
-    amount: txn.amount,
-    description: txn.description,
-    balanceAfter: txn.balanceAfter,
-    status: txn.status,
-    createdAt: txn.createdAt
-}));
+  const response = {
+        type: txn.type,
+        direction,
+        amount: txn.amount,
+        description: txn.description || txn.type,
+        status: txn.status,
+        balanceAfter: txn.balanceAfter,
+        createdAt: txn.createdAt
+    };
 
-    // 3. response
-    return res.status(200).json(
-        new ApiResponse(
-            200,
-            formattedTransactions,
-            "Transactions fetched successfully"
-        )
-    );
+    // Sirf transfer me from/to add karo
+    if (txn.type === "TRANSFER") {
+        response.from = {
+            accountNumber: txn.fromAccount.accountNumber
+        };
+
+        response.to = {
+            accountNumber: txn.toAccount.accountNumber
+        };
+    }
+
+    return response;
+
+});
+
+
+// 4. response
+return res.status(200).json(
+    new ApiResponse(
+        200,
+        formattedTransactions,
+        "Transactions fetched successfully"
+    )
+);
 });
 
    const getLedgerHistory = asynHandler(async (req, res) => {

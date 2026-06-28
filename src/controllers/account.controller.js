@@ -84,7 +84,7 @@ const AccountCreate = asynHandler(async (req, res) => {
 const depositMoney = asynHandler(async (req, res) => {
 
     // 1. amount get karo
-    const { amount } = req.body;
+    const { amount , description } = req.body;
 
     // 2. validation
     if (!amount || amount <= 0) {
@@ -126,8 +126,9 @@ const transaction = await Transaction.create({
   account: account._id,
   type: "DEPOSIT",
   amount: Number(amount),
-  description: "Money deposited",
-  balanceAfter: currentBalance + Number(amount)
+  description: description || "Money Withdraw",
+  balanceAfter: currentBalance + Number(amount),
+  status: "SUCCESS"
 });
  
     console.log("TRANSACTION CREATED", transaction._id);
@@ -141,11 +142,13 @@ const ledger = await ledgerModel.create({
 
 console.log("LEDGER CREATED", ledger);
 
+
+
     // 6. response bhejo
     return res.status(200).json(
         new ApiResponse(
             200,
-            account,
+            transaction,
             "Money deposited successfully"
         )
     );
@@ -159,7 +162,7 @@ console.log("LEDGER CREATED", ledger);
 const withdrowMoney = asynHandler(async(req , res) => {
 
     // Get Amount from req.body
-    const { amount } = req.body;
+    const { amount , description} = req.body;
 
     // 2. validation
     if (!amount || amount <= 0) {
@@ -210,8 +213,9 @@ const withdrowMoney = asynHandler(async(req , res) => {
   account: account._id,
   type: "WITHDRAW",
   amount: Number(amount),
-  description: "Money withdrawn",
-  balanceAfter: currentBalance - Number(amount)
+   description: description || "Money Withdraw",
+  balanceAfter: currentBalance - Number(amount),
+  status: "SUCCESS"
 });
 
 console.log("TRANSACTION CREATED", transaction._id);
@@ -223,13 +227,14 @@ console.log("TRANSACTION CREATED", transaction._id);
   type: "DEBIT"
 });
 
-console.log("LEDGER CREATED", ledger);
+console.log("LEDGER CREATED", ledgerModel);
+
 
     // 8. response bhejo
     return res.status(200).json(
         new ApiResponse(
             200,
-            account,
+            transaction,
             "Money WithDraw successfully"
         )
     );

@@ -3,11 +3,13 @@ import { Account } from "./account.model.js";
 
 const transactionSchema = new mongoose.Schema(
   {
-    // account: {
-    //   type: mongoose.Schema.Types.ObjectId,
-    //   ref: "Account",
-    //   required: true,
-    // },
+    account: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Account",
+     required: function () {
+    return this.type !== "TRANSFER";
+  },
+    },
 
     type: {
       type: String,

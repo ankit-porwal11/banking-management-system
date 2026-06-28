@@ -183,8 +183,18 @@ console.log("STEP 4");
 // console.log("CREDIT =", creditLedgerEntry);
 // console.log("AFTER CREDIT LEDGER");
 
+
      transaction.status = "SUCCESS"
      await transaction.save({session})
+
+     // after
+     await Transaction.findByIdAndUpdate(
+    transaction._id,
+    { status: "SUCCESS" },
+    { session }
+    
+   
+);
 
      await session.commitTransaction()  
       session.endSession()
