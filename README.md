@@ -7,18 +7,43 @@ This project includes authentication, account management, and full transaction h
 
 ## 🚀 Features
 
-- User Registration & Login
-- JWT Authentication (Access & Refresh Tokens)
-- Secure Password Hashing
-- Account Creation & Management
-- Deposit Money
-- Withdraw Money
-- Fund Transfer Between Accounts
-- Transaction History Tracking
-- RESTful API Architecture
-- Error Handling & Validation
+## Features
+
+* User Registration & Login
+* JWT Authentication (Access & Refresh Tokens)
+* Secure Password Hashing (bcrypt)
+* Account Creation & Management
+* Deposit Money
+* Withdraw Money
+* Fund Transfer Between Accounts
+* Transaction History Tracking
+* Double Entry Ledger System
+* Balance Calculation Using Ledger Entries
+* Self Transfer Prevention
+* Idempotency Key Support for Safe Transfers
+* Transfer Status Tracking (Pending, Success, Failed, Reversed)
+* Account Status Validation
+* Custom Transaction Descriptions
+* Credit / Debit Transaction Classification
+* RESTful API Architecture
+* Centralized Error Handling
+* Request Validation & Security Checks
+* MongoDB Transactions (Session Support)
 
 ---
+
+## Key Banking Features
+
+* Double-entry ledger architecture
+* Transaction audit trail
+* Account-to-account fund transfers
+* Idempotent transfer requests
+* Self-transfer protection
+* Credit and debit transaction tracking
+* Historical transaction records
+* Balance derived from ledger entries
+
+
 
 ## 🛠️ Tech Stack
 
