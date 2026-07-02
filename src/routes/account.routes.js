@@ -30,8 +30,9 @@ RETURN REQUEST ROUTES
 =====================================================
 */
 
-router.route("/return-request/create")
-.post(verifyJWT, createReturnRequest);
+// router.route("/return-request/create")
+// .post(verifyJWT, createReturnRequest);
+router.post("/return-request/:transactionId", verifyJWT, createReturnRequest);
 
 router.route("/return-request/my-requests")
 .get(verifyJWT, getMyReturnRequests);

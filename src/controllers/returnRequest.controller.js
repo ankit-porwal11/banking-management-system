@@ -25,188 +25,88 @@ flow:
 */
 const createReturnRequest = asynHandler(async (req, res) => {
   console.log("CREATE RETURN REQUEST HIT");
-  console.log("BODY =", req.body);
 
-  const {
-    receiverAccountNumber,
-    amount,
-    originalTransactionId,
-    reason,
-  } = req.body;
+  const { transactionId } = req.params;
+  const { reason } = req.body;
 
-  // 1. Validate Request
-  if (
-    !receiverAccountNumber ||
-    !amount ||
-    !originalTransactionId
-  ) {
-    throw new ApiError(
-      400,
-      "receiverAccountNumber, amount and originalTransactionId are required"
-    );
+  // 1. Validate transactionId
+  if (!transactionId) {
+    throw new ApiError(400, "Transaction ID is required");
   }
 
-  // 2. Find Sender Account
+  // 2. Find sender account (logged-in user)
   const senderAccount = await Account.findOne({
     user: req.user._id,
   });
 
   if (!senderAccount) {
-    throw new ApiError(
-      404,
-      "Sender account not found"
-    );
+    throw new ApiError(404, "Sender account not found");
   }
 
-  // 3. Find Receiver Account
-  const receiverAccount = await Account.findOne({
-    accountNumber: receiverAccountNumber,
-  });
+  // 3. Find transaction
+  const transaction = await Transaction.findById(transactionId);
 
-  if (!receiverAccount) {
-    throw new ApiError(
-      404,
-      "Receiver account not found"
-    );
+  if (!transaction) {
+    throw new ApiError(404, "Transaction not found");
   }
 
-  // 4. Self Request Block
+  // 4. Must be successful transfer
+  if (transaction.type !== "TRANSFER") {
+    throw new ApiError(400, "Only transfer transactions allowed");
+  }
+
+  if (transaction.status !== "SUCCESS") {
+    throw new ApiError(400, "Transaction is not successful");
+  }
+
+  // 5. Ownership check
   if (
-    senderAccount._id.toString() ===
-    receiverAccount._id.toString()
-  ) {
-    throw new ApiError(
-      400,
-      "Cannot create return request on same account"
-    );
-  }
-
-  // 5. Validate Original Transaction
-  const originalTransaction =
-    await Transaction.findById(
-      originalTransactionId
-    );
-
-  if (!originalTransaction) {
-    throw new ApiError(
-      404,
-      "Original transaction not found"
-    );
-  }
-
-  // Must be transfer
-  if (originalTransaction.type !== "TRANSFER") {
-    throw new ApiError(
-      400,
-      "Only transfer transactions are eligible for return requests"
-    );
-  }
-
-  // Must be successful
-  if (originalTransaction.status !== "SUCCESS") {
-    throw new ApiError(
-      400,
-      "Transaction is not successful"
-    );
-  }
-
-  // Logged-in user must be sender
-  if (
-    originalTransaction.fromAccount.toString() !==
-    senderAccount._id.toString()
+    transaction.fromAccount.toString() !== senderAccount._id.toString()
   ) {
     throw new ApiError(
       403,
-      "You can only create return request for your own transfer"
+      "You can only request return for your own transaction"
     );
   }
 
-  // Receiver must match original transaction receiver
-  if (
-    originalTransaction.toAccount.toString() !==
-    receiverAccount._id.toString()
-  ) {
-    throw new ApiError(
-      400,
-      "Receiver account does not match original transaction"
-    );
+  // 6. Find receiver from transaction (NOT frontend)
+  const receiverAccount = await Account.findById(transaction.toAccount);
+
+  if (!receiverAccount) {
+    throw new ApiError(404, "Receiver account not found");
   }
 
- 
-// Amount check
-if (amount > originalTransaction.amount) {
-  throw new ApiError(
-    400,
-    "Return amount cannot exceed original transfer amount"
-  );
-}
-
- const existingRequest =
-  await ReturnRequest.findOne({
-    originalTransaction: originalTransaction._id
+  // 7. Duplicate request check
+  const existingRequest = await ReturnRequest.findOne({
+    originalTransaction: transaction._id,
   });
 
-if (existingRequest) {
-  throw new ApiError(
-    400,
-    "Return request already exists for this transaction"
-  );
-}
+  if (existingRequest) {
+    throw new ApiError(400, "Return request already exists");
+  }
 
-
-  // Prevent duplicate return requests
-// const existingRequest =
-//   await ReturnRequest.findOne({
-//     originalTransaction: originalTransaction._id,
-//     settlementStatus: {
-//       $ne: "COMPLETED"
-//     }
-//   });
-
-// if (existingRequest) {
-//   throw new ApiError(
-//     400,
-//     "Return request already exists for this transaction"
-//   );
-// }
-
-  // 6. Create Return Request
+  // 8. Create return request (backend controlled)
   const request = await ReturnRequest.create({
-    originalTransaction:
-      originalTransaction._id,
+    originalTransaction: transaction._id,
+    requesterAccount: senderAccount._id,
+    approverAccount: receiverAccount._id,
 
-    requesterAccount:
-      senderAccount._id,
-
-    approverAccount:
-      receiverAccount._id,
-
-    totalAmount: amount,
-
+    totalAmount: transaction.amount,
     settledAmount: 0,
+    remainingAmount: transaction.amount,
 
-    remainingAmount: amount,
-
-    reason: reason || "",
+    reason: reason || "No reason provided",
 
     status: "PENDING",
-
     settlementStatus: "PENDING",
 
-    expiresAt: new Date(
-      Date.now() + 24 * 60 * 60 * 1000
-    ),
+    expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
   });
 
   return res.status(201).json(
-    new ApiResponse(
-      201,
-      request,
-      "Return request created successfully"
-    )
+    new ApiResponse(201, request, "Return request created successfully")
   );
 });
-
 
 /*
 =====================================================
