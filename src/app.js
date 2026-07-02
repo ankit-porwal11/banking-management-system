@@ -1,6 +1,7 @@
 import express from "express";
 import cors from "cors"; // ye frontend - backend connect krne ke liye 
 import cookieParser from "cookie-parser";
+import { errorHandler } from "./middleware/error.middleware.js";
 
 const app = express();
 
@@ -26,6 +27,7 @@ app.use("/api/v1/account" , accountRouter)
 
  //❤️❤️ Routes Declaration 
  app.use("/api/v1/users" , userRouter)
+ app.use(errorHandler);
 
  // http://localhost:8000/api/v1/users/register   ... example ...👈 
 

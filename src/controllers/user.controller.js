@@ -4,7 +4,7 @@ import { User } from "../models/user.model.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { ApiResponse } from "../utils/ApiRespones.js";
 import jwt from "jsonwebtoken";
-import  { sendRegistrationEmail }  from "../service/email.service.js";
+// import  { sendRegistrationEmail }  from "../service/email.service.js";
 
 //❤️ Access & refresh token generat krne ki ek method bnai hai taki bar bar nhi krna pde
 // yha pr asynHandler ki required nhi hai kyo ki yha koi web req. handle nhi kr rhe hai ye hmari internal method hai
@@ -146,7 +146,7 @@ console.log("✅ CLOUDINARY DONE");
   }
 
    console.log("User saved successfully");
-  await sendRegistrationEmail(user.email , user.fullName)
+  // await sendRegistrationEmail(user.email , user.fullName)
   console.log("Email sent successfully");
 
   return res.status(201).json(

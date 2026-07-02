@@ -13,7 +13,7 @@ const transactionSchema = new mongoose.Schema(
 
     type: {
       type: String,
-      enum: ["DEPOSIT", "WITHDRAW", "TRANSFER"],
+      enum: ["DEPOSIT", "WITHDRAW", "TRANSFER" , "RETURN"],
       required: true,
     },
 
@@ -72,6 +72,12 @@ toAccount: {
     },
       default: "PENDING",
     },
+    referenceTransaction: {
+  type: mongoose.Schema.Types.ObjectId,
+  ref: "Transaction",
+  default: null,
+  index: true
+},
   },
   {
     timestamps: true,

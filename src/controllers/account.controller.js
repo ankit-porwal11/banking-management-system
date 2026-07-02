@@ -2,9 +2,10 @@ import { asynHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/apiError.js";
 import { ApiResponse } from "../utils/ApiRespones.js";
 import { Account } from "../models/account.model.js"
-import  { sendAccountCreatedEmail }  from "../service/email.service.js";
+// import  { sendAccountCreatedEmail }  from "../service/email.service.js";
 import { Transaction } from "../models/transaction.model.js";
 import { ledgerModel } from "../models/ledger.model.js";
+import { processPendingReturnRequests } from "../utils/returnSettlement.js";
 
 
 
@@ -64,9 +65,9 @@ const AccountCreate = asynHandler(async (req, res) => {
 //    console.log("Account Create successfully");
 //    console.log("EMAIL:", req.user.email);
 // console.log("FULLNAME:", req.user.fullName);
-   await sendAccountCreatedEmail( req.user.email,
-   req.user.fullName,
-   account.accountNumber)
+  //  await sendAccountCreatedEmail( req.user.email,
+  //  req.user.fullName,
+  //  account.accountNumber)
 //    console.log("Email sent successfully");
   // 6. Response
   return res.status(201).json(
@@ -142,7 +143,9 @@ const ledger = await ledgerModel.create({
 
 console.log("LEDGER CREATED", ledger);
 
-
+await processPendingReturnRequests(
+  account._id
+);
 
     // 6. response bhejo
     return res.status(200).json(
